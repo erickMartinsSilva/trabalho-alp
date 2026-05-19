@@ -1,6 +1,8 @@
 # Stage 1: Build
 FROM golang:1.24-alpine AS builder
 
+RUN apk --no-cache add gcc musl-dev
+
 WORKDIR /app
 
 # Copiar go.mod e go.sum (se existir)
@@ -11,13 +13,13 @@ RUN go mod download
 COPY . .
 
 # Build da aplicação
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o main .
 
 # Stage 2: Runtime
 FROM alpine:latest
 
 # Instalar CA certificates para HTTPS
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates libc6-compat
 
 WORKDIR /root/
 
