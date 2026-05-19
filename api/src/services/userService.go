@@ -6,12 +6,12 @@ import (
 )
 
 func CreateUser(user models.User) error {
-	query := "INSERT INTO users VALUES (?)"
+	query := "INSERT INTO users (name) VALUES (?)"
 	_, err := db.Instance.Exec(query, user.Name)
 	return err
 }
 
-func GetUserById(id int) (models.User, error) {
+func GetUserById(id string) (models.User, error) {
 	query := "SELECT * FROM users WHERE id = ?"
 	row := db.Instance.QueryRow(query, id)
 	
@@ -48,13 +48,13 @@ func GetUsers() ([]models.User, error) {
 	return users, nil
 }
 
-func UpdateUser(id int, data models.User) error {
+func UpdateUser(user models.User) error {
 	query := "UPDATE users SET name = ? WHERE id = ?"
-	_, err := db.Instance.Exec(query, data.Name, id)
+	_, err := db.Instance.Exec(query, user.Name, user.ID)
 	return err
 }
 
-func DeleteUser(id int) error {
+func DeleteUser(id string) error {
 	query := "DELETE FROM users WHERE id = ?"
 	_, err := db.Instance.Exec(query, id)
 	return err
