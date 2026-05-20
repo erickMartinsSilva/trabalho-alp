@@ -5,10 +5,16 @@ import (
 	"ALP/src/models"
 )
 
-func CreateUser(user models.User) error {
-	query := "INSERT INTO users (name) VALUES (?)"
-	_, err := db.Instance.Exec(query, user.Name)
-	return err
+func CreateUser(data models.User) (models.User, error) {
+	query := "INSERT INTO users (name) VALUES (?) RETURNING id, name"
+	res := db.Instance.QueryRow(query, data.Name)
+	if res.Err() != nil {
+		return models.User{}, res.Err()
+	}
+
+	var user = models.User{}
+	res.Scan(&user.ID, &user.Name)
+	return user, nil
 }
 
 func GetUserById(id string) (models.User, error) {
@@ -48,14 +54,24 @@ func GetUsers() ([]models.User, error) {
 	return users, nil
 }
 
-func UpdateUser(user models.User) error {
-	query := "UPDATE users SET name = ? WHERE id = ?"
-	_, err := db.Instance.Exec(query, user.Name, user.ID)
-	return err
+func UpdateUser(id string, data models.User) (models.User, error) {
+	query := "UPDATE users SET name = ? WHERE id = ? RETURNING id, name"
+	res := db.Instance.QueryRow(query, data.Name, id)
+
+	var user models.User
+	if err := res.Scan(&user.ID, &user.Name); err != nil {
+		return models.User{}, err
+	}
+	return user, nil
 }
 
-func DeleteUser(id string) error {
-	query := "DELETE FROM users WHERE id = ?"
-	_, err := db.Instance.Exec(query, id)
-	return err
+func DeleteUser(id string) (models.User, error) {
+	query := "DELETE FROM users WHERE id = ? RETURNING id, name"
+	res := db.Instance.QueryRow(query, id)
+
+	var user models.User
+	if err := res.Scan(&user.ID, &user.Name); err != nil {
+		return models.User{}, err
+	}
+	return user, nil
 }
