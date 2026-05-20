@@ -3,7 +3,10 @@ package controllers
 import (
 	"ALP/src/models"
 	"ALP/src/services"
+	"ALP/src/utils"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 )
 
@@ -15,13 +18,12 @@ func GetUserById(w http.ResponseWriter, r *http.Request){
 	}
 
 	user, err := services.GetUserById(id)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	if err == nil {
+		utils.SendResponse(w, http.StatusOK, user)
+	} else if errors.Is(err, sql.ErrNoRows) {
+		http.Error(w, "User not found", http.StatusNotFound)
 	} else {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusAccepted)
-		json.NewEncoder(w).Encode(user)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -31,27 +33,24 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	} else {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusAccepted)
-		json.NewEncoder(w).Encode(users)
+		utils.SendResponse(w, http.StatusOK, users)
 	}
 }
 
 func CreateUser(w http.ResponseWriter, r *http.Request){
-	var user models.User
+	var data models.User
 
-	err := json.NewDecoder(r.Body).Decode(&user)
-	if err != nil {
+	err := json.NewDecoder(r.Body).Decode(&data)
+	if data.Name == "" {
+		http.Error(w, "Field 'name' is required", http.StatusBadRequest)
+	} else if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	err = services.CreateUser(user)
-
+	user, err := services.CreateUser(data)
 	if err == nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		utils.SendResponse(w, http.StatusCreated, map[string]any{
 			"message": "User created successfully",
 			"user": user,
 		})
@@ -61,21 +60,30 @@ func CreateUser(w http.ResponseWriter, r *http.Request){
 }
 
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
-	var user models.User
-	err := json.NewDecoder(r.Body).Decode(&user)
-	if err != nil {
+	id := r.PathValue("id")
+	if id == "" {
+		http.Error(w, "ID in route required", http.StatusBadRequest)
+		return
+	}
+
+	var data models.User
+	err := json.NewDecoder(r.Body).Decode(&data)
+	if data.Name == "" {
+		http.Error(w, "Field 'name' is required", http.StatusBadRequest)
+		return
+	} else if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	err = services.UpdateUser(user)
+	user, err := services.UpdateUser(id, data)
 	if err == nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusAccepted)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		utils.SendResponse(w, http.StatusOK, map[string]any{
 			"message": "User updated successfully",
 			"user": user,
 		})
+	} else if errors.Is(err, sql.ErrNoRows) {
+		http.Error(w, "User not found", http.StatusNotFound)
 	} else {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -88,14 +96,14 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := services.DeleteUser(id)
+	user, err := services.DeleteUser(id)
 	if err == nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusAccepted)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		utils.SendResponse(w, http.StatusOK, map[string]any{
 			"message": "User deleted successfully",
-			"id": id,
+			"user": user,
 		})
+	} else if errors.Is(err, sql.ErrNoRows) {
+		http.Error(w, "User not found", http.StatusNotFound)
 	} else {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
