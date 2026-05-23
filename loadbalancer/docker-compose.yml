@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # Backends
+  api1:
+    build: ../api/
+    container_name: alp-api-1
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - DB_PATH=/data/app.db
+    volumes:
+      - sqlite_data:/data
+    restart: unless-stopped
+
+  api2:
+    build: ../api/
+    container_name: alp-api-2
+    ports:
+      - "8081:8080"
+    environment:
+      - PORT=8080
+      - DB_PATH=/data/app.db
+    volumes:
+      - sqlite_data:/data
+    restart: unless-stopped
+
+  api3:
+    build: ../api/
+    container_name: alp-api-3
+    ports:
+      - "8082:8080"
+    environment:
+      - PORT=8080
+      - DB_PATH=/data/app.db
+    volumes:
+      - sqlite_data:/data
+    restart: unless-stopped
+
+  # Load Balancer
+  loadbalancer:
+    build: .
+    container_name: alp-loadbalancer
+    ports:
+      - "80:8080"
+    depends_on:
+      - api1
+      - api2
+      - api3
+    restart: unless-stopped
+    environment:
+      - BACKEND_URLS=http://api1:8080,http://api2:8080,http://api3:8080
+volumes:
+  sqlite_data:
