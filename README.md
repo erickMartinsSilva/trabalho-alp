@@ -9,29 +9,23 @@ Sistema distribuído de gerenciamento de usuários composto por três camadas: u
 ## Arquitetura
 
 ```
-┌─────────┐        ┌──────────────┐        ┌──────────┐
-│   CLI   │ ──────▶│ Load Balancer│ ──────▶│  API 1   │
-│ (Go)    │        │   :5080      │   ┌───▶│  :8080   │
-└─────────┘        └──────────────┘   │    └──────────┘
-                                       │    ┌──────────┐
-                                       ├───▶│  API 2   │
-                                       │    │  :8081   │
-                                       │    └──────────┘
-                                       │    ┌──────────┐
-                                       └───▶│  API 3   │
-                                            │  :8082   │
-                                            └──────────┘
-                                                  │
                                             ┌──────────┐
-                                            │  SQLite  │
-                                            │ (volume  │
-                                            │compartil.)│
+                                        ┌──▶│  API 1   │──┐
+                                        │   │  :8080   │  │
+     ┌─────────┐      ┌──────────────┐  │   └──────────┘  │  ┌────────────┐
+     │   CLI   │─────▶│ Load Balancer│  │   ┌──────────┐  │  │   SQLite   │
+     │ (Go)    │      │   :5080      │──┼──▶│  API 2   │──├─▶│  (volume   │
+     └─────────┘      └──────────────┘  │   │  :8081   │  │  │compartil.) │
+                                        │   └──────────┘  │  └────────────┘
+                                        │   ┌──────────┐  │
+                                        └──▶│  API 3   │──┘
+                                            │  :8082   │
                                             └──────────┘
 ```
 
-- **Load Balancer** — distribui as requisições entre as três instâncias da API (round-robin).
+- **Load Balancer** — Proxy em Go que distribui as requisições entre as três instâncias da API via Round-Robin.
 - **API** — servidor HTTP em Go que expõe um CRUD de usuários, persistindo os dados em SQLite.
-- **CLI** — interface interativa em modo texto que se comunica com o Load Balancer.
+- **CLI** — interface interativa em modo texto escrito em Go que se comunica com o Load Balancer.
 
 ---
 
@@ -39,7 +33,7 @@ Sistema distribuído de gerenciamento de usuários composto por três camadas: u
 
 | Ferramenta | Versão mínima | Uso |
 |---|---|---|
-| [Go](https://go.dev/dl/) | 1.18 | Executar todas as camadas da aplicação |
+| [Go](https://go.dev/dl/) | 1.18 | Executar a interface |
 | [Docker](https://docs.docker.com/get-docker/) | 20+ | Containerizar API e Load Balancer |
 | [Docker Compose](https://docs.docker.com/compose/) | v2 | Orquestrar os serviços de back-end |
 

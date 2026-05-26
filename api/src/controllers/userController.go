@@ -42,7 +42,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request){
 
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if data.Name == "" {
-		http.Error(w, "Campo 'nome' é obrigatório", http.StatusBadRequest)
+		http.Error(w, "Campo 'name' é obrigatório", http.StatusBadRequest)
 	} else if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -69,7 +69,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	var data models.User
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if data.Name == "" {
-		http.Error(w, "Campo 'nome' é obrigatório", http.StatusBadRequest)
+		http.Error(w, "Campo 'name' é obrigatório", http.StatusBadRequest)
 		return
 	} else if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
