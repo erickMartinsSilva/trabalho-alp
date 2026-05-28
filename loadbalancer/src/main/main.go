@@ -44,11 +44,9 @@ func getNextAvailableServer(server *models.RoundRobin) *models.Backend {
 			continue
 		}
 
-		backend.Mux.RLock()
-		alive := backend.Alive
-		backend.Mux.RUnlock()
-
-		if alive || IsAlive(backend) {
+		// Sempre faz um health check antes de usar
+		// (não confia só no cache)
+		if IsAlive(backend) {
 			return backend
 		}
 	}
@@ -103,7 +101,7 @@ func main() {
 		reverseProxy.ServeHTTP(w, r)
 	})
 
-	fmt.Println("Load Balancer rodando na porta 8080!")
+	fmt.Println("Load Balancer rodando na porta 5080!")
 	fmt.Println("Backends: api1:8080, api2:8080, api3:8080")
 	http.ListenAndServe(":8080", nil)
 }
